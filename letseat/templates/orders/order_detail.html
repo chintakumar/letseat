@@ -1,10 +1,32 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
-<h2>Order #{{ order.id }}</h2>
-<p>Status: {{ order.get_status_display }}</p>
-<ul>
-    {% for oi in order.orderitem_set.all %}
-        <li>{{ oi.food_item.name }} - Qty: {{ oi.quantity }}</li>
-    {% endfor %}
-</ul>
+<div class="container mt-4">
+    <h2>Order #{{ order.id }}</h2>
+    <p>Status: {% if order.is_served %}Served{% else %}Pending{% endif %}</p>
+
+    <div class="row">
+        {% for entry in items_with_total %}
+        <div class="col-12 col-sm-6 col-md-4 mb-3">
+            <div class="card h-100 shadow-sm">
+                {% if entry.item.food_item.image %}
+                <img src="{{ entry.item.food_item.image.url }}" class="card-img-top" alt="{{ entry.item.food_item.name }}" style="height: 200px; object-fit: cover;">
+                {% else %}
+                <img src="{% static 'images/default_food.jpg' %}" class="card-img-top" alt="{{ entry.item.food_item.name }}" style="height: 200px; object-fit: cover;">
+                {% endif %}
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ entry.item.food_item.name }}</h5>
+                    <p>Quantity: {{ entry.item.quantity }}</p>
+                    <p>Price: ₹{{ entry.item.food_item.price }}</p>
+                    <p>Total: ₹{{ entry.total_price }}</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h4 class="mt-4">Total Amount: ₹{{ total_amount }}</h4>
+    <a href="{% url 'pages:home' %}" class="btn btn-primary mt-3">Back to Menu</a>
+</div>
 {% endblock %}

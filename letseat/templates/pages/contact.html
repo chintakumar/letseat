@@ -1,12 +1,13 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>LetsEat - Contact</title>
-</head>
-<body>
-    <h1>Contact Us</h1>
-    <p>Email: support@letseat.com</p>
-    <p>Phone: +91-9876543210</p>
-    <a href="{% url 'pages:home' %}">Back to Home</a>
-</body>
-</html>
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="card mx-auto" style="max-width: 600px; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h1 class="text-center mb-4">Contact Us</h1>
+        <p class="text-center">Email: <a href="mailto:kumar.chinta10021@gmail.com">kumar.chinta10021@gmail.com</a></p>
+        <p class="text-center">Phone: <a href="tel:+919876543210">+91-0000000000</a></p>
+        <a href="{% url 'pages:home' %}" class="btn btn-primary d-block mt-3">Back to Home</a>
+    </div>
+</div>
+{% endblock %}

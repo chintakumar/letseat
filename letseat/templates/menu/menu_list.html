@@ -1,38 +1,122 @@
 {% extends "base.html" %}
+{% load static %}
+
 {% block content %}
-<h2>Menu</h2>
+<div class="container mt-4">
+    <h2 class="mb-4 text-center">🍽️ Our Menu</h2>
 
-<!-- Filters -->
-<form method="get" class="mb-3">
-    <select name="type">
-        <option value="">All Types</option>
-        <option value="veg" {% if selected_type == "veg" %}selected{% endif %}>Veg</option>
-        <option value="non_veg" {% if selected_type == "non_veg" %}selected{% endif %}>Non-Veg</option>
-    </select>
-
-    <select name="category">
-        <option value="">All Categories</option>
-        <option value="starter" {% if selected_category == "starter" %}selected{% endif %}>Starter</option>
-        <option value="chinese" {% if selected_category == "chinese" %}selected{% endif %}>Chinese</option>
-        <option value="main_course" {% if selected_category == "main_course" %}selected{% endif %}>Main Course</option>
-        <option value="dessert" {% if selected_category == "dessert" %}selected{% endif %}>Dessert</option>
-        <option value="drink" {% if selected_category == "drink" %}selected{% endif %}>Drink</option>
-    </select>
-
-    <button type="submit" class="btn btn-primary btn-sm">Filter</button>
-</form>
-
-<div class="menu-items">
-    {% for item in items %}
-        <div class="menu-item">
-            <h4>{{ item.name }} - ₹{{ item.price }}</h4>
-            <p>{{ item.category }} | {{ item.type }}</p>
-            {% if item.image %}
-                <img src="{{ item.image.url }}" alt="{{ item.name }}" width="150">
-            {% endif %}
+    <!-- Filters -->
+    <div class="row mb-4">
+        <!-- Categories -->
+        <div class="col-md-3 mb-3">
+            <h5>Categories</h5>
+            <ul class="list-group">
+                <li class="list-group-item {% if not selected_category %}active{% endif %}">
+                    <a href="?{% if selected_type %}type={{ selected_type }}{% endif %}" class="{% if not selected_category %}text-white{% endif %}">All</a>
+                </li>
+                {% for cat in categories %}
+                <li class="list-group-item {% if selected_category == cat.name %}active{% endif %}">
+                    <a href="?category={{ cat.name }}{% if selected_type %}&type={{ selected_type }}{% endif %}" class="{% if selected_category == cat.name %}text-white{% endif %}">{{ cat.name }}</a>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
-    {% empty %}
-        <p>No items found.</p>
-    {% endfor %}
+
+        <!-- Food Type -->
+        <div class="col-md-3 mb-3">
+            <h5>Food Type</h5>
+            <ul class="list-group">
+                <li class="list-group-item {% if selected_type == 'veg' %}active{% endif %}">
+                    <a href="?type=veg{% if selected_category %}&category={{ selected_category }}{% endif %}" class="{% if selected_type == 'veg' %}text-white{% endif %}">Veg</a>
+                </li>
+                <li class="list-group-item {% if selected_type == 'non-veg' %}active{% endif %}">
+                    <a href="?type=non-veg{% if selected_category %}&category={{ selected_category }}{% endif %}" class="{% if selected_type == 'non-veg' %}text-white{% endif %}">Non-Veg</a>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Spacer for larger screens -->
+        <div class="col-md-6"></div>
+    </div>
+
+    <!-- Menu Items -->
+    <div class="row">
+        {% if items %}
+            {% for item in items %}
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    {% if item.image %}
+                    <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <img src="{% static 'images/default_food.jpg' %}" class="card-img-top" alt="{{ item.name }}" style="height: 200px; object-fit: cover;">
+                    {% endif %}
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ item.name }}</h5>
+                        <p class="card-text">₹{{ item.price }}</p>
+
+                        <!-- Quantity input -->
+                        <div class="mb-2">
+                            <label for="qty_{{ item.id }}">Quantity:</label>
+                            <input type="number" id="qty_{{ item.id }}" name="quantity" value="1" min="1" class="form-control quantity-input" data-price="{{ item.price }}" data-item="{{ item.id }}">
+                        </div>
+
+                        <!-- Dynamic total -->
+                        <p>Total: ₹<span id="total_{{ item.id }}">{{ item.price }}</span></p>
+
+                        <!-- Login check for order -->
+                        {% if user.is_authenticated %}
+                            <a href="{% url 'orders:order_create' item.id %}" class="btn btn-success mt-auto order-btn" data-item="{{ item.id }}">Order Now</a>
+                        {% else %}
+                            <a href="{% url 'accounts:login_email' %}" class="btn btn-secondary mt-auto">Login to Order</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <p class="text-center">No items found.</p>
+        </div>
+        {% endif %}
+    </div>
 </div>
+
+<!-- Optional: Add responsive styling for small devices -->
+<style>
+    @media (max-width: 576px) {
+        .list-group-item a {
+            display: block;
+            width: 100%;
+        }
+    }
+</style>
+
+<!-- JavaScript to update total dynamically -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const quantityInputs = document.querySelectorAll('.quantity-input');
+
+    quantityInputs.forEach(function(input) {
+        input.addEventListener('input', function() {
+            const itemId = input.dataset.item;
+            const price = parseFloat(input.dataset.price);
+            let qty = parseInt(input.value);
+
+            if (isNaN(qty) || qty < 1) {
+                qty = 1;
+                input.value = 1;
+            }
+
+            const totalElement = document.getElementById('total_' + itemId);
+            totalElement.textContent = (price * qty).toFixed(2);
+
+            // Update the "Order Now" button with quantity parameter (only if user logged in)
+            const orderBtn = document.querySelector('.order-btn[data-item="' + itemId + '"]');
+            if (orderBtn) {
+                orderBtn.href = `/orders/${itemId}/?quantity=${qty}`;
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
